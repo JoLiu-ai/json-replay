@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Chat Visualizer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #2d3748;
+        }
+
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .title-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .chat-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .action-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .export-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .bookmark-btn {
+            background: #f7fafc;
+            color: #4a5568;
+            border: 2px solid #e2e8f0;
+        }
+
+        .bookmark-btn:hover {
+            background: #edf2f7;
+            border-color: #cbd5e0;
+        }
+
+        .stats {
+            display: flex;
+            gap: 30px;
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .view-tabs {
+            display: flex;
+            background: #f7fafc;
+            border-radius: 15px;
+            padding: 6px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            background: transparent;
+            color: #718096;
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #2d3748;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-section {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .filter-dropdown {
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            min-width: 150px;
+        }
+
+        .content-area {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            min-height: 600px;
+        }
+
+        /* Timeline View Styles */
+        .timeline-view {
+            display: none;
+        }
+
+        .timeline-view.active {
+            display: block;
+        }
+
+        .message-container {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .sibling-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 10px;
+        }
+
+        .sibling-tab {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            background: #f8fafc;
+            color: #64748b;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        .sibling-tab.active {
+            background: white;
+            color: #1e293b;
+            border-bottom-color: #667eea;
+        }
+
+        .message-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid #f1f5f9;
+            position: relative;
+            margin-left: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .message-card:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .message-card.user {
+            background: linear-gradient(135deg, #e6f3ff 0%, #f0f8ff 100%);
+            border-left: 4px solid #667eea;
+        }
+
+        .message-card.assistant {
+            background: linear-gradient(135deg, #f0fdf4 0%, #f7fee7 100%);
+            border-left: 4px solid #10b981;
+        }
+
+        .message-card.system {
+            background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+            border-left: 4px solid #6b7280;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .author {
+            font-weight: 700;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .author-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+            color: white;
+        }
+
+        .user .author-icon {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .assistant .author-icon {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .system .author-icon {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        }
+
+        .message-actions {
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .message-card:hover .message-actions {
+            opacity: 1;
+        }
+
+        .msg-action-btn {
+            padding: 6px 8px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.05);
+            color: #64748b;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .msg-action-btn:hover {
+            background: rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+        }
+
+        .bookmark.bookmarked {
+            color: #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .timestamp {
+            font-size: 12px;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .content {
+            line-height: 1.6;
+            color: #374151;
+        }
+
+        .content p {
+            margin-bottom: 12px;
+        }
+
+        .thinking-section {
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .thinking-summary {
+            padding: 12px 16px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #4b5563;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        .thinking-summary:hover {
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .thinking-content {
+            padding: 0 16px 16px;
+            color: #6b7280;
+            font-style: italic;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            background: rgba(0, 0, 0, 0.01);
+        }
+
+        /* Tree View Styles */
+        .tree-view {
+            display: none;
+        }
+
+        .tree-view.active {
+            display: block;
+        }
+
+        /* Network View Styles */
+        .network-view {
+            display: none;
+            height: 600px;
+        }
+
+        .network-view.active {
+            display: block;
+        }
+
+        /* Search View Styles */
+        .search-view {
+            display: none;
+        }
+
+        .search-view.active {
+            display: block;
+        }
+
+        .search-results {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .search-result-item {
+            padding: 15px;
+            border-bottom: 1px solid #f1f5f9;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .search-result-item:hover {
+            background: #f8fafc;
+        }
+
+        .search-highlight {
+            background: #fef3c7;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .app-container {
+                padding: 10px;
+            }
+
+            .title-section {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .filter-section {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .search-box {
+                min-width: auto;
+                width: 100%;
+            }
+
+            .message-card {
+                margin-left: 10px;
+                padding: 15px;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-card {
+            animation: fadeInUp 0.5s ease;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            font-size: 16px;
+            color: #64748b;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header Section -->
+        <div class="header">
+            <div class="title-section">
+                <h1 class="chat-title" id="chat-title">Loading Conversation...</h1>
+                <div class="actions">
+                    <button class="action-btn export-btn" id="export-btn">
+                        <span>📁</span> Export
+                    </button>
+                    <button class="action-btn bookmark-btn" id="bookmark-btn">
+                        <span>⭐</span> Bookmark
+                    </button>
+                </div>
+            </div>
+            <div class="stats">
+                <div class="stat-item">
+                    <span>💬</span>
+                    <span id="message-count">0 messages</span>
+                </div>
+                <div class="stat-item">
+                    <span>🌳</span>
+                    <span id="branch-count">0 branches</span>
+                </div>
+                <div class="stat-item">
+                    <span>⏱️</span>
+                    <span id="duration">Duration: N/A</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls Section -->
+        <div class="controls">
+            <div class="view-tabs">
+                <button class="tab-btn active" data-view="timeline">📋 Timeline</button>
+                <button class="tab-btn" data-view="tree">🌳 Tree</button>
+                <button class="tab-btn" data-view="network">🕸️ Network</button>
+                <button class="tab-btn" data-view="search">🔍 Search</button>
+            </div>
+            <div class="filter-section">
+                <input type="text" class="search-box" id="search-input" placeholder="Search messages...">
+                <select class="filter-dropdown" id="role-filter">
+                    <option value="all">All Roles</option>
+                    <option value="user">User Only</option>
+                    <option value="assistant">Assistant Only</option>
+                    <option value="system">System Only</option>
+                </select>
+                <select class="filter-dropdown" id="bookmark-filter">
+                    <option value="all">All Messages</option>
+                    <option value="bookmarked">Bookmarked Only</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <div class="timeline-view active" id="timeline-view">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Loading conversation data...
+                </div>
+            </div>
+            <div class="tree-view" id="tree-view">Tree view will be implemented here</div>
+            <div class="network-view" id="network-view"></div>
+            <div class="search-view" id="search-view">
+                <div class="search-results" id="search-results"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ChatVisualizer {
+            constructor(conversationData) {
+                this.conversationData = conversationData;
+                this.network = null;
+                this.bookmarkedMessages = new Set();
+                this.currentView = 'timeline';
+                this.siblingStates = new Map(); // Track which sibling is active for each parent
+                
+                this.initializeEventListeners();
+                this.loadConversation();
+            }
+
+            initializeEventListeners() {
+                // View switching
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.switchView(e.target.dataset.view);
+                    });
+                });
+
+                // Search and filters
+                document.getElementById('search-input').addEventListener('input', (e) => {
+                    this.handleSearch(e.target.value);
+                });
+
+                document.getElementById('role-filter').addEventListener('change', (e) => {
+                    this.applyFilters();
+                });
+
+                document.getElementById('bookmark-filter').addEventListener('change', (e) => {
+                    this.applyFilters();
+                });
+
+                // Export and bookmark actions
+                document.getElementById('export-btn').addEventListener('click', () => {
+                    this.exportConversation();
+                });
+
+                document.getElementById('bookmark-btn').addEventListener('click', () => {
+                    this.toggleGlobalBookmark();
+                });
+            }
+
+            async loadConversation() {
+                try {
+                    document.getElementById('chat-title').textContent = this.conversationData.title;
+                    this.updateStats();
+                    this.renderCurrentView();
+                } catch (error) {
+                    console.error("Failed to load conversation data:", error);
+                    document.getElementById('timeline-view').innerHTML = 
+                        '<p style="text-align: center; color: #ef4444;">Error loading conversation data. Please check the console.</p>';
+                }
+            }
+
+            updateStats() {
+                const messages = Object.values(this.conversationData.mapping).filter(node => node.message);
+                const messageCount = messages.length;
+                const branchCount = this.countBranches();
+                const duration = this.calculateDuration(messages);
+
+                document.getElementById('message-count').textContent = `${messageCount} messages`;
+                document.getElementById('branch-count').textContent = `${branchCount} branches`;
+                document.getElementById('duration').textContent = `Duration: ${duration}`;
+            }
+
+            countBranches() {
+                let branches = 0;
+                Object.values(this.conversationData.mapping).forEach(node => {
+                    if (node.children && node.children.length > 1) {
+                        branches += node.children.length - 1;
+                    }
+                });
+                return branches;
+            }
+
+            calculateDuration(messages) {
+                if (messages.length < 2) return "N/A";
+                const times = messages.map(msg => msg.message.create_time).filter(t => t).sort();
+                const duration = times[times.length - 1] - times[0];
+                const minutes = Math.floor(duration / 60);
+                return `${minutes} minutes`;
+            }
+
+            switchView(viewName) {
+                // Update active tab
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.view === viewName);
+                });
+
+                // Update active view
+                document.querySelectorAll('.timeline-view, .tree-view, .network-view, .search-view').forEach(view => {
+                    view.classList.remove('active');
+                });
+                document.getElementById(`${viewName}-view`).classList.add('active');
+
+                this.currentView = viewName;
+                this.renderCurrentView();
+            }
+
+            renderCurrentView() {
+                switch (this.currentView) {
+                    case 'timeline':
+                        this.renderTimelineView();
+                        break;
+                    case 'tree':
+                        this.renderTreeView();
+                        break;
+                    case 'network':
+                        this.renderNetworkView();
+                        break;
+                    case 'search':
+                        this.renderSearchView();
+                        break;
+                }
+            }
+
+            renderTimelineView() {
+                const { mapping } = this.conversationData;
+                const rootId = 'client-created-root';
+                const rootNode = mapping[rootId];
+                const container = document.getElementById('timeline-view');
+
+                container.innerHTML = '';
+
+                if (rootNode && rootNode.children) {
+                    rootNode.children.forEach(childId => {
+                        const childElement = this.buildTimelineNode(childId, mapping, 0);
+                        container.appendChild(childElement);
+                    });
+                }
+            }
+
+            buildTimelineNode(nodeId, mapping, depth) {
+                const nodeData = mapping[nodeId];
+                if (!nodeData || !nodeData.message) {
+                    return document.createElement('div');
+                }
+
+                const container = document.createElement('div');
+                container.classList.add('message-container');
+                container.dataset.nodeId = nodeId;
+
+                // Handle siblings - create tabs if there are multiple children at the same level
+                const parent = nodeData.parent ? mapping[nodeData.parent] : null;
+                if (parent && parent.children && parent.children.length > 1) {
+                    const siblings = parent.children;
+                    const currentIndex = siblings.indexOf(nodeId);
+                    
+                    // Check if we need to create sibling tabs
+                    if (!this.siblingStates.has(parent.id)) {
+                        this.siblingStates.set(parent.id, siblings[0]); // Default to first sibling
+                    }
+
+                    const activeSibling = this.siblingStates.get(parent.id);
+                    
+                    // Only show the active sibling
+                    if (nodeId !== activeSibling) {
+                        container.style.display = 'none';
+                    }
+
+                    // Create sibling tabs only for the active sibling
+                    if (nodeId === activeSibling) {
+                        const tabsContainer = document.createElement('div');
+                        tabsContainer.classList.add('sibling-tabs');
+
+                        siblings.forEach((siblingId, index) => {
+                            const siblingData = mapping[siblingId];
+                            if (siblingData && siblingData.message) {
+                                const tab = document.createElement('button');
+                                tab.classList.add('sibling-tab');
+                                if (siblingId === activeSibling) {
+                                    tab.classList.add('active');
+                                }
+                                tab.textContent = `Response ${index + 1}`;
+                                tab.addEventListener('click', () => {
+                                    this.switchSibling(parent.id, siblingId);
+                                });
+                                tabsContainer.appendChild(tab);
+                            }
+                        });
+
+                        container.appendChild(tabsContainer);
+                    }
+                }
+
+                // Create the message card
+                const card = this.createMessageCard(nodeData);
+                container.appendChild(card);
+
+                // Add children
+                if (nodeData.children && nodeData.children.length > 0) {
+                    nodeData.children.forEach(childId => {
+                        const childNode = this.buildTimelineNode(childId, mapping, depth + 1);
+                        container.appendChild(childNode);
+                    });
+                }
+
+                return container;
+            }
+
+            switchSibling(parentId, newActiveSibling) {
+                this.siblingStates.set(parentId, newActiveSibling);
+                this.renderTimelineView(); // Re-render to show the new active sibling
+            }
+
+            createMessageCard(nodeData) {
+                const card = document.createElement('div');
+                card.classList.add('message-card', nodeData.message.author.role);
+                card.dataset.messageId = nodeData.id;
+
+                // Message header
+                const header = document.createElement('div');
+                header.classList.add('message-header');
+
+                const authorSection = document.createElement('div');
+                authorSection.classList.add('author');
+
+                const authorIcon = document.createElement('div');
+                authorIcon.classList.add('author-icon');
+                const role = nodeData.message.author.role;
+                authorIcon.textContent = role === 'user' ? 'L' : role === 'assistant' ? 'C' : 'S';
+
+                const authorName = document.createElement('span');
+                authorName.textContent = role === 'user' ? 'L (User)' : 
+                                       role === 'assistant' ? 'Claude (Assistant)' : 'System';
+
+                authorSection.appendChild(authorIcon);
+                authorSection.appendChild(authorName);
+
+                const rightSection = document.createElement('div');
+                rightSection.style.display = 'flex';
+                rightSection.style.alignItems = 'center';
+                rightSection.style.gap = '15px';
+
+                const timestamp = document.createElement('div');
+                timestamp.classList.add('timestamp');
+                timestamp.textContent = nodeData.message.create_time ? 
+                    new Date(nodeData.message.create_time * 1000).toLocaleString() : 'No timestamp';
+
+                const actions = document.createElement('div');
+                actions.classList.add('message-actions');
+
+                // Bookmark button
+                const bookmarkBtn = document.createElement('button');
+                bookmarkBtn.classList.add('msg-action-btn', 'bookmark');
+                bookmarkBtn.innerHTML = '⭐';
+                bookmarkBtn.title = 'Bookmark';
+                if (this.bookmarkedMessages.has(nodeData.id)) {
+                    bookmarkBtn.classList.add('bookmarked');
+                }
+                bookmarkBtn.addEventListener('click', () => {
+                    this.toggleMessageBookmark(nodeData.id);
+                });
+
+                // Copy button
+                const copyBtn = document.createElement('button');
+                copyBtn.classList.add('msg-action-btn');
+                copyBtn.innerHTML = '📋';
+                copyBtn.title = 'Copy';
+                copyBtn.addEventListener('click', () => {
+                    this.copyMessage(nodeData);
+                });
+
+                // Delete button
+                const deleteBtn = document.createElement('button');
+                deleteBtn.classList.add('msg-action-btn');
+                deleteBtn.innerHTML = '🗑️';
+                deleteBtn.title = 'Delete';
+                deleteBtn.addEventListener('click', () => {
+                    this.deleteMessage(nodeData.id);
+                });
+
+                actions.appendChild(bookmarkBtn);
+                actions.appendChild(copyBtn);
+                actions.appendChild(deleteBtn);
+
+                rightSection.appendChild(timestamp);
+                rightSection.appendChild(actions);
+
+                header.appendChild(authorSection);
+                header.appendChild(rightSection);
+
+                // Message content
+                const content = document.createElement('div');
+                content.classList.add('content');
+
+                const contentText = this.getMessageContent(nodeData);
+                this.parseMessageContent(contentText, content);
+
+                card.appendChild(header);
+                card.appendChild(content);
+
+                return card;
+            }
+
+            parseMessageContent(contentText, contentElement) {
+                // Handle <thinking> blocks
+                if (contentText.includes('<thinking>')) {
+                    const thinkingMatch = contentText.match(/<thinking>([\s\S]*?)<\/thinking>/);
+                    const answerMatch = contentText.match(/<answer>([\s\S]*?)<\/answer>/);
+
+                    if (thinkingMatch) {
+                        const thinkingSection = document.createElement('div');
+                        thinkingSection.classList.add('thinking-section');
+
+                        const summary = document.createElement('div');
+                        summary.classList.add('thinking-summary');
+                        summary.innerHTML = '🤔 Show thinking process';
+                        
+                        const thinkingContent = document.createElement('div');
+                        thinkingContent.classList.add('thinking-content');
+                        thinkingContent.style.display = 'none';
+                        thinkingContent.textContent = thinkingMatch[1].trim();
+
+                        summary.addEventListener('click', () => {
+                            const isVisible = thinkingContent.style.display !== 'none';
+                            thinkingContent.style.display = isVisible ? 'none' : 'block';
+                            summary.innerHTML = isVisible ? '🤔 Show thinking process' : '🤔 Hide thinking process';
+                        });
+
+                        thinkingSection.appendChild(summary);
+                        thinkingSection.appendChild(thinkingContent);
+                        contentElement.appendChild(thinkingSection);
+                    }
+
+                    if (answerMatch) {
+                        const answerContent = document.createElement('div');
+                        answerContent.innerHTML = this.formatText(answerMatch[1].trim());
+                        contentElement.appendChild(answerContent);
+                    }
+                } else {
+                    contentElement.innerHTML = this.formatText(contentText);
+                }
+            }
+
+            formatText(text) {
+                // Convert markdown-like formatting to HTML
+                return text
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/`(.*?)`/g, '<code style="background: rgba(0,0,0,0.1); padding: 2px 4px; border-radius: 4px;">$1</code>')
+                    .replace(/\n\n/g, '</p><p>')
+                    .replace(/\n/g, '<br>')
+                    .replace(/^/, '<p>')
+                    .replace(/$/, '</p>');
+            }
+
+            toggleMessageBookmark(messageId) {
+                if (this.bookmarkedMessages.has(messageId)) {
+                    this.bookmarkedMessages.delete(messageId);
+                } else {
+                    this.bookmarkedMessages.add(messageId);
+                }
+                
+                // Update UI
+                const card = document.querySelector(`[data-message-id="${messageId}"]`);
+                if (card) {
+                    const bookmarkBtn = card.querySelector('.bookmark');
+                    bookmarkBtn.classList.toggle('bookmarked', this.bookmarkedMessages.has(messageId));
+                }
+                
+                this.applyFilters();
+            }
+
+            copyMessage(nodeData) {
+                const content = this.getMessageContent(nodeData);
+                navigator.clipboard.writeText(content).then(() => {
+                    // Show temporary feedback
+                    this.showToast('Message copied to clipboard!');
+                });
+            }
+
+            deleteMessage(messageId) {
+                if (confirm('Are you sure you want to delete this message? This action cannot be undone.')) {
+                    // Remove from data structure
+                    const nodeData = this.conversationData.mapping[messageId];
+                    if (nodeData) {
+                        // Update parent's children array
+                        if (nodeData.parent) {
+                            const parent = this.conversationData.mapping[nodeData.parent];
+                            if (parent && parent.children) {
+                                parent.children = parent.children.filter(id => id !== messageId);
+                            }
+                        }
+                        
+                        // Remove from mapping
+                        delete this.conversationData.mapping[messageId];
+                        
+                        // Re-render current view
+                        this.renderCurrentView();
+                        this.updateStats();
+                        this.showToast('Message deleted successfully!');
+                    }
+                }
+            }
+
+            showToast(message) {
+                const toast = document.createElement('div');
+                toast.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #10b981;
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    z-index: 1000;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                    animation: slideInRight 0.3s ease;
+                `;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.style.animation = 'slideOutRight 0.3s ease';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            }
+
+            renderTreeView() {
+                const container = document.getElementById('tree-view');
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #64748b;">🌳 Tree view coming soon...</div>';
+            }
+
+            renderNetworkView() {
+                if (!this.network) {
+                    const { mapping } = this.conversationData;
+                    const nodes = [];
+                    const edges = [];
+                    
+                    Object.keys(mapping).forEach(nodeId => {
+                        const nodeData = mapping[nodeId];
+                        if (nodeData && nodeData.message) {
+                            const role = nodeData.message.author.role;
+                            let label = role === 'user' ? 'L' : role === 'assistant' ? 'C' : 'S';
+
+                            nodes.push({
+                                id: nodeId,
+                                label: label,
+                                title: this.getMessageContent(nodeData).substring(0, 100) + '...',
+                                color: this.getRoleColor(role),
+                                font: { color: 'white', size: 16, face: 'Arial' }
+                            });
+
+                            if (nodeData.parent && nodeData.parent !== 'client-created-root') {
+                                edges.push({
+                                    from: nodeData.parent,
+                                    to: nodeId,
+                                    arrows: 'to',
+                                    color: { color: '#cbd5e0' }
+                                });
+                            }
+                        }
+                    });
+                    
+                    const container = document.getElementById('network-view');
+                    const graphData = {
+                        nodes: new vis.DataSet(nodes),
+                        edges: new vis.DataSet(edges),
+                    };
+                    
+                    const options = {
+                        layout: {
+                            hierarchical: {
+                                direction: "UD",
+                                sortMethod: "directed",
+                                levelSeparation: 150,
+                                nodeSpacing: 200
+                            },
+                        },
+                        edges: {
+                            arrows: 'to',
+                            smooth: { type: 'cubicBezier', forceDirection: 'vertical' },
+                            color: { color: '#cbd5e0' }
+                        },
+                        nodes: {
+                            shape: 'circle',
+                            size: 30,
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        },
+                        physics: false,
+                        interaction: {
+                            hover: true,
+                            selectConnectedEdges: true
+                        }
+                    };
+
+                    this.network = new vis.Network(container, graphData, options);
+                    
+                    // Add click handler for nodes
+                    this.network.on('click', (params) => {
+                        if (params.nodes.length > 0) {
+                            const nodeId = params.nodes[0];
+                            this.highlightMessageInTimeline(nodeId);
+                        }
+                    });
+                }
+            }
+
+            highlightMessageInTimeline(nodeId) {
+                // Switch to timeline view and highlight the message
+                this.switchView('timeline');
+                setTimeout(() => {
+                    const messageCard = document.querySelector(`[data-message-id="${nodeId}"]`);
+                    if (messageCard) {
+                        messageCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        messageCard.style.boxShadow = '0 0 20px rgba(102, 126, 234, 0.5)';
+                        setTimeout(() => {
+                            messageCard.style.boxShadow = '';
+                        }, 2000);
+                    }
+                }, 100);
+            }
+
+            getRoleColor(role) {
+                switch (role) {
+                    case 'user':
+                        return '#667eea';
+                    case 'assistant':
+                        return '#10b981';
+                    case 'system':
+                        return '#6b7280';
+                    default:
+                        return '#94a3b8';
+                }
+            }
+
+            renderSearchView() {
+                const container = document.getElementById('search-results');
+                const searchTerm = document.getElementById('search-input').value.toLowerCase();
+                
+                if (!searchTerm) {
+                    container.innerHTML = '<div style="text-align: center; padding: 40px; color: #64748b;">Enter a search term to find messages...</div>';
+                    return;
+                }
+
+                const results = this.searchMessages(searchTerm);
+                
+                if (results.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; padding: 40px; color: #64748b;">No messages found matching your search.</div>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                results.forEach(result => {
+                    const resultElement = this.createSearchResultElement(result, searchTerm);
+                    container.appendChild(resultElement);
+                });
+            }
+
+            searchMessages(searchTerm) {
+                const results = [];
+                const { mapping } = this.conversationData;
+
+                Object.values(mapping).forEach(nodeData => {
+                    if (nodeData && nodeData.message) {
+                        const content = this.getMessageContent(nodeData).toLowerCase();
+                        if (content.includes(searchTerm)) {
+                            results.push({
+                                nodeData,
+                                matches: this.findMatches(content, searchTerm)
+                            });
+                        }
+                    }
+                });
+
+                return results;
+            }
+
+            findMatches(content, searchTerm) {
+                const matches = [];
+                const contentLower = content.toLowerCase();
+                let startIndex = 0;
+
+                while (true) {
+                    const index = contentLower.indexOf(searchTerm, startIndex);
+                    if (index === -1) break;
+                    
+                    const start = Math.max(0, index - 50);
+                    const end = Math.min(content.length, index + searchTerm.length + 50);
+                    const snippet = content.substring(start, end);
+                    
+                    matches.push({
+                        snippet,
+                        highlightStart: index - start,
+                        highlightEnd: index - start + searchTerm.length
+                    });
+                    
+                    startIndex = index + 1;
+                }
+
+                return matches;
+            }
+
+            createSearchResultElement(result, searchTerm) {
+                const { nodeData, matches } = result;
+                const element = document.createElement('div');
+                element.classList.add('search-result-item');
+                
+                const role = nodeData.message.author.role;
+                const authorName = role === 'user' ? 'L (User)' : 
+                                 role === 'assistant' ? 'Claude (Assistant)' : 'System';
+                
+                const timestamp = new Date(nodeData.message.create_time * 1000).toLocaleString();
+                
+                element.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <strong style="color: ${this.getRoleColor(role)};">${authorName}</strong>
+                        <span style="color: #64748b; font-size: 12px;">${timestamp}</span>
+                    </div>
+                    <div style="color: #374151;">
+                        ${matches.map(match => {
+                            const before = match.snippet.substring(0, match.highlightStart);
+                            const highlighted = match.snippet.substring(match.highlightStart, match.highlightEnd);
+                            const after = match.snippet.substring(match.highlightEnd);
+                            return `${before}<span class="search-highlight">${highlighted}</span>${after}`;
+                        }).join('...')}
+                    </div>
+                `;
+                
+                element.addEventListener('click', () => {
+                    this.highlightMessageInTimeline(nodeData.id);
+                });
+                
+                return element;
+            }
+
+            handleSearch(searchTerm) {
+                if (this.currentView === 'search') {
+                    this.renderSearchView();
+                } else {
+                    // Filter current view based on search term
+                    this.applyFilters();
+                }
+            }
+
+            applyFilters() {
+                const searchTerm = document.getElementById('search-input').value.toLowerCase();
+                const roleFilter = document.getElementById('role-filter').value;
+                const bookmarkFilter = document.getElementById('bookmark-filter').value;
+
+                const messageCards = document.querySelectorAll('.message-card');
+                
+                messageCards.forEach(card => {
+                    const messageId = card.dataset.messageId;
+                    const nodeData = this.conversationData.mapping[messageId];
+                    
+                    if (!nodeData) return;
+                    
+                    let shouldShow = true;
+                    
+                    // Apply search filter
+                    if (searchTerm) {
+                        const content = this.getMessageContent(nodeData).toLowerCase();
+                        shouldShow = shouldShow && content.includes(searchTerm);
+                    }
+                    
+                    // Apply role filter
+                    if (roleFilter !== 'all') {
+                        shouldShow = shouldShow && nodeData.message.author.role === roleFilter;
+                    }
+                    
+                    // Apply bookmark filter
+                    if (bookmarkFilter === 'bookmarked') {
+                        shouldShow = shouldShow && this.bookmarkedMessages.has(messageId);
+                    }
+                    
+                    const container = card.closest('.message-container');
+                    if (container) {
+                        container.style.display = shouldShow ? 'block' : 'none';
+                    }
+                });
+            }
+
+            exportConversation() {
+                const exportData = {
+                    title: this.conversationData.title,
+                    exportDate: new Date().toISOString(),
+                    bookmarkedMessages: Array.from(this.bookmarkedMessages),
+                    conversation: this.conversationData
+                };
+
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${this.conversationData.title.replace(/[^a-z0-9]/gi, '_')}_export.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                this.showToast('Conversation exported successfully!');
+            }
+
+            toggleGlobalBookmark() {
+                // Toggle bookmark for the entire conversation
+                const isBookmarked = document.getElementById('bookmark-btn').classList.contains('bookmarked');
+                document.getElementById('bookmark-btn').classList.toggle('bookmarked', !isBookmarked);
+                
+                const action = isBookmarked ? 'removed from' : 'added to';
+                this.showToast(`Conversation ${action} bookmarks!`);
+            }
+
+            getMessageContent(nodeData) {
+                if (
+                    nodeData &&
+                    nodeData.message &&
+                    nodeData.message.content &&
+                    Array.isArray(nodeData.message.content.parts)
+                ) {
+                    return nodeData.message.content.parts.join('');
+                } else if (
+                    nodeData &&
+                    nodeData.message &&
+                    nodeData.message.content &&
+                    typeof nodeData.message.content === 'string'
+                ) {
+                    return nodeData.message.content;
+                } else {
+                    return '';
+                }
+            }
+        }
+
+        // Add CSS for toast animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInRight {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOutRight {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            new ChatVisualizer(window.CONVERSATION_DATA);
+        });
+    </script>
+</body>
+</html>

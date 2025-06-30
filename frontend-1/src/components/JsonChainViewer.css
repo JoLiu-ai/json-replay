@@ -1,0 +1,312 @@
+/* General Styles */
+.json-chain-viewer * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.json-chain-viewer {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #2d3748;
+}
+
+/* Header Styles */
+.jcv-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 20px 30px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.jcv-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.jcv-chat-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1a202c;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.jcv-chat-stats {
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+    color: #718096;
+}
+
+.jcv-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Controls Styles */
+.jcv-controls {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.jcv-search-container {
+    position: relative;
+}
+
+.jcv-search-input {
+    padding: 8px 16px 8px 40px;
+    border: 1px solid rgba(209, 213, 219, 0.5);
+    border-radius: 8px;
+    font-size: 14px;
+    width: 300px;
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.jcv-search-input:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.jcv-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+}
+
+/* Main Content Styles */
+.jcv-main-content {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    min-height: 600px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+}
+
+.jcv-view-container {
+    display: none;
+    height: 100%;
+}
+
+.jcv-view-container.active {
+    display: block;
+}
+
+/* Tree View Styles */
+.jcv-tree-view {
+    padding: 20px;
+    overflow-y: auto;
+    height: 600px;
+}
+
+.jcv-message-container {
+    margin-bottom: 16px;
+    position: relative;
+}
+
+.jcv-message-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(229, 231, 235, 0.8);
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.jcv-message-card:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+.jcv-message-card.user {
+    background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+}
+
+.jcv-message-card.assistant {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+}
+
+.jcv-message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.jcv-author {
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.jcv-author::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.user .jcv-author { color: #3730a3; }
+.assistant .jcv-author { color: #166534; }
+
+.jcv-message-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.jcv-content {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #374151;
+}
+
+.jcv-content p { margin: 0; }
+
+.jcv-thinking-block {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    margin: 12px 0;
+}
+
+.jcv-thinking-block summary {
+    padding: 12px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.jcv-thinking-block-content {
+    padding: 0 12px 12px;
+    color: #4b5563;
+    font-size: 14px;
+}
+
+/* List View Styles */
+.jcv-list-view {
+    padding: 0;
+    overflow-y: auto;
+    height: 600px;
+}
+
+.jcv-list-item {
+    padding: 20px 30px;
+    border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+    display: flex;
+    gap: 20px;
+    transition: background 0.2s ease;
+}
+
+.jcv-list-item:hover { background: rgba(99, 102, 241, 0.02); }
+.jcv-list-item:last-child { border-bottom: none; }
+
+.jcv-list-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.jcv-list-avatar.user {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+}
+
+.jcv-list-avatar.assistant {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.jcv-list-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.jcv-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.jcv-list-author { font-weight: 600; color: #1f2937; }
+
+.jcv-list-text {
+    color: #4b5563;
+    line-height: 1.5;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+/* Table View Styles */
+.jcv-table-view {
+    overflow: auto;
+    height: 600px;
+}
+
+.jcv-conversation-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.jcv-conversation-table th {
+    background: rgba(99, 102, 241, 0.1);
+    padding: 16px;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 2px solid rgba(99, 102, 241, 0.2);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.jcv-conversation-table td {
+    padding: 16px;
+    border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+    vertical-align: top;
+}
+
+.jcv-conversation-table tr:hover { background: rgba(99, 102, 241, 0.02); }
+
+/* Network View Styles */
+.jcv-network-view {
+    height: 600px;
+    width: 100%;
+    position: relative;
+}
+
+/* Breadcrumb */
+.jcv-breadcrumb {
+    padding: 15px 30px;
+    background: rgba(99, 102, 241, 0.05);
+    border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+    font-size: 14px;
+    color: #6b7280;
+} 
